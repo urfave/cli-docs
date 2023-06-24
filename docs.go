@@ -2,6 +2,7 @@ package docs
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io"
 	"os"
@@ -18,6 +19,12 @@ import (
 )
 
 var (
+	//go:embed markdown.md.gotmpl
+	MarkdownDocTemplate string
+
+	//go:embed markdown_tabular.md.gotmpl
+	MarkdownTabularDocTemplate string
+
 	isTracingOn = os.Getenv("URFAVE_CLI_TRACING") == "on"
 )
 

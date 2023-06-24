@@ -2,6 +2,7 @@ package docs
 
 import (
 	"bytes"
+	"embed"
 	"io"
 	"io/fs"
 	"net/mail"
@@ -12,8 +13,13 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+var (
+	//go:embed testdata
+	testdata embed.FS
+)
+
 func expectFileContent(t *testing.T, file, got string) {
-	data, err := os.ReadFile(file)
+	data, err := testdata.ReadFile(file)
 	// Ignore windows line endings
 	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 
@@ -137,13 +143,8 @@ Should be a part of the same code block
 }
 
 func TestToMarkdownFull(t *testing.T) {
-	// Given
 	cmd := buildExtendedTestCommand()
-
-	// When
 	res, err := ToMarkdown(cmd)
-
-	// Then
 	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-full.md", res)
 }
@@ -152,28 +153,19 @@ func TestToTabularMarkdown(t *testing.T) {
 	app := buildExtendedTestCommand()
 
 	t.Run("full", func(t *testing.T) {
-		// When
 		res, err := ToTabularMarkdown(app, "app")
-
-		// Then
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-full.md", res)
 	})
 
 	t.Run("with empty path", func(t *testing.T) {
-		// When
 		res, err := ToTabularMarkdown(app, "")
-
-		// Then
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-full.md", res)
 	})
 
 	t.Run("with custom app path", func(t *testing.T) {
-		// When
 		res, err := ToTabularMarkdown(app, "/usr/local/bin")
-
-		// Then
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-custom-app-path.md", res)
 	})
@@ -183,7 +175,7 @@ func TestToTabularMarkdownFailed(t *testing.T) {
 	tpl := MarkdownTabularDocTemplate
 	t.Cleanup(func() { MarkdownTabularDocTemplate = tpl })
 
-	MarkdownTabularDocTemplate = "{{ .Foo }}" // invalid template
+	MarkdownTabularDocTemplate = "{{ .Foo }}"
 
 	app := buildExtendedTestCommand()
 
@@ -196,7 +188,7 @@ func TestToTabularMarkdownFailed(t *testing.T) {
 }
 
 func TestToTabularToFileBetweenTags(t *testing.T) {
-	expectedDocs, fErr := os.ReadFile("testdata/expected-tabular-markdown-full.md")
+	expectedDocs, fErr := testdata.ReadFile("testdata/expected-tabular-markdown-full.md")
 
 	r := require.New(t)
 	r.NoError(fErr)
@@ -302,44 +294,46 @@ Some other text`))
 	})
 }
 
-func TestToMarkdownNoFlags(t *testing.T) {
-	app := buildExtendedTestCommand()
-	app.Flags = nil
+func TestToMarkdown(t *testing.T) {
+	t.Run("no flags", func(t *testing.T) {
+		app := buildExtendedTestCommand()
+		app.Flags = nil
 
-	res, err := ToMarkdown(app)
+		res, err := ToMarkdown(app)
 
-	require.NoError(t, err)
-	expectFileContent(t, "testdata/expected-doc-no-flags.md", res)
-}
+		require.NoError(t, err)
+		expectFileContent(t, "testdata/expected-doc-no-flags.md", res)
+	})
 
-func TestToMarkdownNoCommands(t *testing.T) {
-	app := buildExtendedTestCommand()
-	app.Commands = nil
+	t.Run("no commands", func(t *testing.T) {
+		app := buildExtendedTestCommand()
+		app.Commands = nil
 
-	res, err := ToMarkdown(app)
+		res, err := ToMarkdown(app)
 
-	require.NoError(t, err)
-	expectFileContent(t, "testdata/expected-doc-no-commands.md", res)
-}
+		require.NoError(t, err)
+		expectFileContent(t, "testdata/expected-doc-no-commands.md", res)
+	})
 
-func TestToMarkdownNoAuthors(t *testing.T) {
-	app := buildExtendedTestCommand()
-	app.Authors = []any{}
+	t.Run("no authors", func(t *testing.T) {
+		app := buildExtendedTestCommand()
+		app.Authors = []any{}
 
-	res, err := ToMarkdown(app)
+		res, err := ToMarkdown(app)
 
-	require.NoError(t, err)
-	expectFileContent(t, "testdata/expected-doc-no-authors.md", res)
-}
+		require.NoError(t, err)
+		expectFileContent(t, "testdata/expected-doc-no-authors.md", res)
+	})
 
-func TestToMarkdownNoUsageText(t *testing.T) {
-	app := buildExtendedTestCommand()
-	app.UsageText = ""
+	t.Run("no usage text", func(t *testing.T) {
+		app := buildExtendedTestCommand()
+		app.UsageText = ""
 
-	res, err := ToMarkdown(app)
+		res, err := ToMarkdown(app)
 
-	require.NoError(t, err)
-	expectFileContent(t, "testdata/expected-doc-no-usagetext.md", res)
+		require.NoError(t, err)
+		expectFileContent(t, "testdata/expected-doc-no-usagetext.md", res)
+	})
 }
 
 func TestToMan(t *testing.T) {
