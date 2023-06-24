@@ -20,12 +20,23 @@ var (
 
 func expectFileContent(t *testing.T, file, got string) {
 	data, err := testdata.ReadFile(file)
-	// Ignore windows line endings
-	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 
 	r := require.New(t)
 	r.NoError(err)
-	r.Equal(got, string(data))
+	r.Equal(
+		string(normalizeNewlines([]byte(got))),
+		string(normalizeNewlines(data)),
+	)
+}
+
+func normalizeNewlines(d []byte) []byte {
+	return bytes.ReplaceAll(
+		bytes.ReplaceAll(
+			d,
+			[]byte("\r\n"), []byte("\n"),
+		),
+		[]byte("\r"), []byte("\n"),
+	)
 }
 
 func buildExtendedTestCommand() *cli.Command {
@@ -192,12 +203,6 @@ func TestToTabularToFileBetweenTags(t *testing.T) {
 
 	r := require.New(t)
 	r.NoError(fErr)
-
-	// normalizes \r\n (windows) and \r (mac) into \n (unix) (required for tests to pass on windows)
-	normalizeNewlines := func(d []byte) []byte {
-		d = bytes.ReplaceAll(d, []byte{13, 10}, []byte{10}) // replace CR LF \r\n (windows) with LF \n (unix)
-		return bytes.ReplaceAll(d, []byte{13}, []byte{10})  // replace CF \r (mac) with LF \n (unix)
-	}
 
 	t.Run("default tags", func(t *testing.T) {
 		tmpFile, err := os.CreateTemp("", "")
