@@ -204,8 +204,6 @@ func TestToTabularToFileBetweenTags(t *testing.T) {
 	r := require.New(t)
 	r.NoError(fErr)
 
-	expectedDocs = normalizeNewlines(expectedDocs)
-
 	t.Run("default tags", func(t *testing.T) {
 		tmpFile, err := os.CreateTemp("", "")
 
