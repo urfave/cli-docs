@@ -1,7 +1,4 @@
-//go:build !urfave_cli_no_docs
-// +build !urfave_cli_no_docs
-
-package cli
+package docs
 
 import (
 	"bytes"
@@ -9,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,11 +14,45 @@ import (
 	"unicode/utf8"
 
 	"github.com/cpuguy83/go-md2man/v2/md2man"
+	"github.com/urfave/cli/v3"
 )
 
-// ToTabularMarkdown creates a tabular markdown documentation for the `*Command`.
-// The function errors if either parsing or writing of the string fails.
-func (cmd *Command) ToTabularMarkdown(appPath string) (string, error) {
+var (
+	isTracingOn = os.Getenv("URFAVE_CLI_TRACING") == "on"
+)
+
+func tracef(format string, a ...any) {
+	if !isTracingOn {
+		return
+	}
+
+	if !strings.HasSuffix(format, "\n") {
+		format = format + "\n"
+	}
+
+	pc, file, line, _ := runtime.Caller(1)
+	cf := runtime.FuncForPC(pc)
+
+	fmt.Fprintf(
+		os.Stderr,
+		strings.Join([]string{
+			"## URFAVE CLI TRACE ",
+			file,
+			":",
+			fmt.Sprintf("%v", line),
+			" ",
+			fmt.Sprintf("(%s)", cf.Name()),
+			" ",
+			format,
+		}, ""),
+		a...,
+	)
+}
+
+// ToTabularMarkdown creates a tabular markdown documentation for
+// the `*cli.Command`. The function errors if either parsing or
+// writing of the string fails.
+func ToTabularMarkdown(cmd *cli.Command, appPath string) (string, error) {
 	if appPath == "" {
 		appPath = "app"
 	}
@@ -57,7 +89,7 @@ func (cmd *Command) ToTabularMarkdown(appPath string) (string, error) {
 
 // ToTabularToFileBetweenTags creates a tabular markdown documentation for the `*App` and updates the file between
 // the tags in the file. The function errors if either parsing or writing of the string fails.
-func (cmd *Command) ToTabularToFileBetweenTags(appPath, filePath string, startEndTags ...string) error {
+func ToTabularToFileBetweenTags(cmd *cli.Command, appPath, filePath string, startEndTags ...string) error {
 	var start, end = "<!--GENERATED:CLI_DOCS-->", "<!--/GENERATED:CLI_DOCS-->" // default tags
 
 	if len(startEndTags) == 2 {
@@ -71,7 +103,7 @@ func (cmd *Command) ToTabularToFileBetweenTags(appPath, filePath string, startEn
 	}
 
 	// generate markdown
-	md, err := cmd.ToTabularMarkdown(appPath)
+	md, err := ToTabularMarkdown(cmd, appPath)
 	if err != nil {
 		return err
 	}
@@ -95,48 +127,52 @@ func (cmd *Command) ToTabularToFileBetweenTags(appPath, filePath string, startEn
 	return nil
 }
 
-// ToMarkdown creates a markdown string for the `*Command`
+// ToMarkdown creates a markdown string for the `*cli.Command`
 // The function errors if either parsing or writing of the string fails.
-func (cmd *Command) ToMarkdown() (string, error) {
+func ToMarkdown(cmd *cli.Command) (string, error) {
 	var w bytes.Buffer
-	if err := cmd.writeDocTemplate(&w, 0); err != nil {
+	if err := writeDocTemplate(cmd, &w, 0); err != nil {
 		return "", err
 	}
 	return w.String(), nil
 }
 
-// ToMan creates a man page string with section number for the `*Command`
-// The function errors if either parsing or writing of the string fails.
-func (cmd *Command) ToManWithSection(sectionNumber int) (string, error) {
+// ToMan creates a man page string with section number for the
+// `*cli.Command` The function errors if either parsing or writing
+// of the string fails.
+func ToManWithSection(cmd *cli.Command, sectionNumber int) (string, error) {
 	var w bytes.Buffer
-	if err := cmd.writeDocTemplate(&w, sectionNumber); err != nil {
+	if err := writeDocTemplate(cmd, &w, sectionNumber); err != nil {
 		return "", err
 	}
 	man := md2man.Render(w.Bytes())
 	return string(man), nil
 }
 
-// ToMan creates a man page string for the `*Command`
+// ToMan creates a man page string for the `*cli.Command`
 // The function errors if either parsing or writing of the string fails.
-func (cmd *Command) ToMan() (string, error) {
-	man, err := cmd.ToManWithSection(8)
+func ToMan(cmd *cli.Command) (string, error) {
+	man, err := ToManWithSection(cmd, 8)
 	return man, err
 }
 
 type cliCommandTemplate struct {
-	Command      *Command
+	Command      *cli.Command
 	SectionNum   int
 	Commands     []string
 	GlobalArgs   []string
 	SynopsisArgs []string
 }
 
-func (cmd *Command) writeDocTemplate(w io.Writer, sectionNum int) error {
+func writeDocTemplate(cmd *cli.Command, w io.Writer, sectionNum int) error {
+	tracef("using MarkdownDocTemplate starting %[1]q", string([]byte(MarkdownDocTemplate)[0:8]))
+
 	const name = "cli"
 	t, err := template.New(name).Parse(MarkdownDocTemplate)
 	if err != nil {
 		return err
 	}
+
 	return t.ExecuteTemplate(w, name, &cliCommandTemplate{
 		Command:      cmd,
 		SectionNum:   sectionNum,
@@ -146,7 +182,7 @@ func (cmd *Command) writeDocTemplate(w io.Writer, sectionNum int) error {
 	})
 }
 
-func prepareCommands(commands []*Command, level int) []string {
+func prepareCommands(commands []*cli.Command, level int) []string {
 	var coms []string
 	for _, command := range commands {
 		if command.Hidden {
@@ -183,22 +219,22 @@ func prepareCommands(commands []*Command, level int) []string {
 	return coms
 }
 
-func prepareArgsWithValues(flags []Flag) []string {
+func prepareArgsWithValues(flags []cli.Flag) []string {
 	return prepareFlags(flags, ", ", "**", "**", `""`, true)
 }
 
-func prepareArgsSynopsis(flags []Flag) []string {
+func prepareArgsSynopsis(flags []cli.Flag) []string {
 	return prepareFlags(flags, "|", "[", "]", "[value]", false)
 }
 
 func prepareFlags(
-	flags []Flag,
+	flags []cli.Flag,
 	sep, opener, closer, value string,
 	addDetails bool,
 ) []string {
 	args := []string{}
 	for _, f := range flags {
-		flag, ok := f.(DocGenerationFlag)
+		flag, ok := f.(cli.DocGenerationFlag)
 		if !ok {
 			continue
 		}
@@ -232,7 +268,7 @@ func prepareFlags(
 }
 
 // flagDetails returns a string containing the flags metadata
-func flagDetails(flag DocGenerationFlag) string {
+func flagDetails(flag cli.DocGenerationFlag) string {
 	description := flag.GetUsage()
 	value := flag.GetValue()
 	if value != "" {
@@ -241,7 +277,7 @@ func flagDetails(flag DocGenerationFlag) string {
 	return ": " + description
 }
 
-func prepareUsageText(command *Command) string {
+func prepareUsageText(command *cli.Command) string {
 	if command.UsageText == "" {
 		return ""
 	}
@@ -264,7 +300,7 @@ func prepareUsageText(command *Command) string {
 	return usageText
 }
 
-func prepareUsage(command *Command, usageText string) string {
+func prepareUsage(command *cli.Command, usageText string) string {
 	if command.Usage == "" {
 		return ""
 	}
@@ -318,7 +354,7 @@ type (
 type tabularTemplate struct{}
 
 // PrepareCommands converts CLI commands into a structs for the rendering.
-func (tt tabularTemplate) PrepareCommands(commands []*Command, appPath, parentCommandName string, level uint) []cliTabularCommandTemplate {
+func (tt tabularTemplate) PrepareCommands(commands []*cli.Command, appPath, parentCommandName string, level uint) []cliTabularCommandTemplate {
 	var result = make([]cliTabularCommandTemplate, 0, len(commands))
 
 	for _, cmd := range commands {
@@ -348,11 +384,11 @@ func (tt tabularTemplate) PrepareCommands(commands []*Command, appPath, parentCo
 }
 
 // PrepareFlags converts CLI flags into a structs for the rendering.
-func (tt tabularTemplate) PrepareFlags(flags []Flag) []cliTabularFlagTemplate {
+func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplate {
 	var result = make([]cliTabularFlagTemplate, 0, len(flags))
 
 	for _, appFlag := range flags {
-		flag, ok := appFlag.(DocGenerationFlag)
+		flag, ok := appFlag.(cli.DocGenerationFlag)
 		if !ok {
 			continue
 		}
@@ -364,7 +400,7 @@ func (tt tabularTemplate) PrepareFlags(flags []Flag) []cliTabularFlagTemplate {
 			Default:    flag.GetValue(),
 		}
 
-		if boolFlag, isBool := appFlag.(*BoolFlag); isBool {
+		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool {
 			f.Default = strconv.FormatBool(boolFlag.Value)
 		}
 

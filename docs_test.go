@@ -1,27 +1,150 @@
-//go:build !urfave_cli_no_docs
-// +build !urfave_cli_no_docs
-
-package cli
+package docs
 
 import (
 	"bytes"
-	"errors"
+	"io"
 	"io/fs"
+	"net/mail"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v3"
 )
+
+func expectFileContent(t *testing.T, file, got string) {
+	data, err := os.ReadFile(file)
+	// Ignore windows line endings
+	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+
+	r := require.New(t)
+	r.NoError(err)
+	r.Equal(got, string(data))
+}
+
+func buildExtendedTestCommand() *cli.Command {
+	return &cli.Command{
+		Writer: io.Discard,
+		Name:   "greet",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:      "socket",
+				Aliases:   []string{"s"},
+				Usage:     "some 'usage' text",
+				Value:     "value",
+				TakesFile: true,
+			},
+			&cli.StringFlag{Name: "flag", Aliases: []string{"fl", "f"}},
+			&cli.BoolFlag{
+				Name:    "another-flag",
+				Aliases: []string{"b"},
+				Usage:   "another usage text",
+				Sources: cli.EnvVars("EXAMPLE_VARIABLE_NAME"),
+			},
+			&cli.BoolFlag{
+				Name:   "hidden-flag",
+				Hidden: true,
+			},
+		},
+		Commands: []*cli.Command{{
+			Aliases: []string{"c"},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:      "flag",
+					Aliases:   []string{"fl", "f"},
+					TakesFile: true,
+				},
+				&cli.BoolFlag{
+					Name:    "another-flag",
+					Aliases: []string{"b"},
+					Usage:   "another usage text",
+				},
+			},
+			Name:  "config",
+			Usage: "another usage test",
+			Commands: []*cli.Command{{
+				Aliases: []string{"s", "ss"},
+				Flags: []cli.Flag{
+					&cli.StringFlag{Name: "sub-flag", Aliases: []string{"sub-fl", "s"}},
+					&cli.BoolFlag{
+						Name:    "sub-command-flag",
+						Aliases: []string{"s"},
+						Usage:   "some usage text",
+					},
+				},
+				Name:  "sub-config",
+				Usage: "another usage test",
+			}},
+		}, {
+			Aliases: []string{"i", "in"},
+			Name:    "info",
+			Usage:   "retrieve generic information",
+		}, {
+			Name: "some-command",
+		}, {
+			Name:   "hidden-command",
+			Hidden: true,
+		}, {
+			Aliases: []string{"u"},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:      "flag",
+					Aliases:   []string{"fl", "f"},
+					TakesFile: true,
+				},
+				&cli.BoolFlag{
+					Name:    "another-flag",
+					Aliases: []string{"b"},
+					Usage:   "another usage text",
+				},
+			},
+			Name:  "usage",
+			Usage: "standard usage text",
+			UsageText: `
+Usage for the usage text
+- formatted:  Based on the specified ConfigMap and summon secrets.yml
+- list:       Inspect the environment for a specific process running on a Pod
+- for_effect: Compare 'namespace' environment with 'local'
+
+` + "```" + `
+func() { ... }
+` + "```" + `
+
+Should be a part of the same code block
+`,
+			Commands: []*cli.Command{{
+				Aliases: []string{"su"},
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:    "sub-command-flag",
+						Aliases: []string{"s"},
+						Usage:   "some usage text",
+					},
+				},
+				Name:      "sub-usage",
+				Usage:     "standard usage text",
+				UsageText: "Single line of UsageText",
+			}},
+		}},
+		UsageText:   "app [first_arg] [second_arg]",
+		Description: `Description of the application.`,
+		Usage:       "Some app",
+		Authors: []any{
+			"Harrison <harrison@lolwut.example.com>",
+			&mail.Address{Name: "Oliver Allen", Address: "oliver@toyshop.com"},
+		},
+	}
+}
 
 func TestToMarkdownFull(t *testing.T) {
 	// Given
 	cmd := buildExtendedTestCommand()
 
 	// When
-	res, err := cmd.ToMarkdown()
+	res, err := ToMarkdown(cmd)
 
 	// Then
-	expect(t, err, nil)
+	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-full.md", res)
 }
 
@@ -30,68 +153,67 @@ func TestToTabularMarkdown(t *testing.T) {
 
 	t.Run("full", func(t *testing.T) {
 		// When
-		res, err := app.ToTabularMarkdown("app")
+		res, err := ToTabularMarkdown(app, "app")
 
 		// Then
-		expect(t, err, nil)
+		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-full.md", res)
 	})
 
 	t.Run("with empty path", func(t *testing.T) {
 		// When
-		res, err := app.ToTabularMarkdown("")
+		res, err := ToTabularMarkdown(app, "")
 
 		// Then
-		expect(t, err, nil)
+		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-full.md", res)
 	})
 
 	t.Run("with custom app path", func(t *testing.T) {
 		// When
-		res, err := app.ToTabularMarkdown("/usr/local/bin")
+		res, err := ToTabularMarkdown(app, "/usr/local/bin")
 
 		// Then
-		expect(t, err, nil)
+		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-custom-app-path.md", res)
 	})
 }
 
 func TestToTabularMarkdownFailed(t *testing.T) {
 	tpl := MarkdownTabularDocTemplate
-	defer func() { MarkdownTabularDocTemplate = tpl }() // restore
+	t.Cleanup(func() { MarkdownTabularDocTemplate = tpl })
 
 	MarkdownTabularDocTemplate = "{{ .Foo }}" // invalid template
 
-	// Given
 	app := buildExtendedTestCommand()
 
-	// When
-	res, err := app.ToTabularMarkdown("")
+	res, err := ToTabularMarkdown(app, "")
 
-	// Then
-	if err == nil {
-		t.Fatal("Expected error but got nil")
-	}
-	expect(t, res, "")
+	r := require.New(t)
+	r.Error(err)
+
+	r.Equal("", res)
 }
 
 func TestToTabularToFileBetweenTags(t *testing.T) {
 	expectedDocs, fErr := os.ReadFile("testdata/expected-tabular-markdown-full.md")
-	expect(t, fErr, nil) // read without error
+
+	r := require.New(t)
+	r.NoError(fErr)
 
 	// normalizes \r\n (windows) and \r (mac) into \n (unix) (required for tests to pass on windows)
-	var normalizeNewlines = func(d []byte) []byte {
-		d = bytes.Replace(d, []byte{13, 10}, []byte{10}, -1) // replace CR LF \r\n (windows) with LF \n (unix)
-		d = bytes.Replace(d, []byte{13}, []byte{10}, -1)     // replace CF \r (mac) with LF \n (unix)
-
-		return d
+	normalizeNewlines := func(d []byte) []byte {
+		d = bytes.ReplaceAll(d, []byte{13, 10}, []byte{10}) // replace CR LF \r\n (windows) with LF \n (unix)
+		return bytes.ReplaceAll(d, []byte{13}, []byte{10})  // replace CF \r (mac) with LF \n (unix)
 	}
 
 	t.Run("default tags", func(t *testing.T) {
 		tmpFile, err := os.CreateTemp("", "")
-		expect(t, err, nil) // created without error
 
-		defer func() { expect(t, os.Remove(tmpFile.Name()), nil) }() // cleanup
+		r := require.New(t)
+		r.NoError(err)
+
+		t.Cleanup(func() { _ = os.Remove(tmpFile.Name()) })
 
 		_, err = tmpFile.WriteString(`# App readme file
 
@@ -101,13 +223,13 @@ Some description
 <!--/GENERATED:CLI_DOCS-->
 
 Some other text`)
-		expect(t, err, nil) // wrote without error
+		r.NoError(err)
 		_ = tmpFile.Close()
 
-		expect(t, buildExtendedTestCommand().ToTabularToFileBetweenTags("app", tmpFile.Name()), nil) // replaced without error
+		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name()))
 
-		content, err := os.ReadFile(tmpFile.Name()) // read the file content
-		expect(t, err, nil)
+		content, err := os.ReadFile(tmpFile.Name())
+		r.NoError(err)
 
 		content = normalizeNewlines(content)
 
@@ -122,14 +244,16 @@ Some description
 
 Some other text`))
 
-		expect(t, string(content), string(expected)) // content matches
+		r.Equal(string(expected), string(content))
 	})
 
 	t.Run("custom tags", func(t *testing.T) {
-		tmpFile, err := os.CreateTemp("", "")
-		expect(t, err, nil) // created without error
+		r := require.New(t)
 
-		defer func() { expect(t, os.Remove(tmpFile.Name()), nil) }() // cleanup
+		tmpFile, err := os.CreateTemp("", "")
+		r.NoError(err)
+
+		t.Cleanup(func() { _ = os.Remove(tmpFile.Name()) }) // cleanup
 
 		_, err = tmpFile.WriteString(`# App readme file
 
@@ -139,13 +263,13 @@ foo_BAR|baz
 lorem+ipsum
 
 Some other text`)
-		expect(t, err, nil) // wrote without error
+		r.NoError(err)
 		_ = tmpFile.Close()
 
-		expect(t, buildExtendedTestCommand().ToTabularToFileBetweenTags("app", tmpFile.Name(), "foo_BAR|baz", "lorem+ipsum"), nil)
+		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name(), "foo_BAR|baz", "lorem+ipsum"))
 
-		content, err := os.ReadFile(tmpFile.Name()) // read the file content
-		expect(t, err, nil)
+		content, err := os.ReadFile(tmpFile.Name())
+		r.NoError(err)
 
 		content = normalizeNewlines(content)
 
@@ -160,158 +284,124 @@ lorem+ipsum
 
 Some other text`))
 
-		expect(t, string(content), string(expected)) // content matches
+		r.Equal(string(expected), string(content))
 	})
 
 	t.Run("missing file", func(t *testing.T) {
+		r := require.New(t)
+
 		tmpFile, err := os.CreateTemp("", "")
-		expect(t, err, nil) // created without error
+		r.NoError(err)
 		_ = tmpFile.Close()
 
-		expect(t, os.Remove(tmpFile.Name()), nil) // and remove immediately
+		r.NoError(os.Remove(tmpFile.Name()))
 
-		err = buildExtendedTestCommand().ToTabularToFileBetweenTags("app", tmpFile.Name())
+		err = ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name())
 
-		expect(t, errors.Is(err, fs.ErrNotExist), true)
+		r.ErrorIs(err, fs.ErrNotExist)
 	})
 }
 
 func TestToMarkdownNoFlags(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 	app.Flags = nil
 
-	// When
-	res, err := app.ToMarkdown()
+	res, err := ToMarkdown(app)
 
-	// Then
-	expect(t, err, nil)
+	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-no-flags.md", res)
 }
 
 func TestToMarkdownNoCommands(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 	app.Commands = nil
 
-	// When
-	res, err := app.ToMarkdown()
+	res, err := ToMarkdown(app)
 
-	// Then
-	expect(t, err, nil)
+	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-no-commands.md", res)
 }
 
 func TestToMarkdownNoAuthors(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 	app.Authors = []any{}
 
-	// When
-	res, err := app.ToMarkdown()
+	res, err := ToMarkdown(app)
 
-	// Then
-	expect(t, err, nil)
+	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-no-authors.md", res)
 }
 
 func TestToMarkdownNoUsageText(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 	app.UsageText = ""
 
-	// When
-	res, err := app.ToMarkdown()
+	res, err := ToMarkdown(app)
 
-	// Then
 	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-no-usagetext.md", res)
 }
 
 func TestToMan(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 
-	// When
-	res, err := app.ToMan()
+	res, err := ToMan(app)
 
-	// Then
-	expect(t, err, nil)
+	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-full.man", res)
 }
 
 func TestToManParseError(t *testing.T) {
-	// Given
 	app := buildExtendedTestCommand()
 
-	// When
-	// temporarily change the global variable for testing
 	tmp := MarkdownDocTemplate
-	MarkdownDocTemplate = `{{ .App.Name`
-	_, err := app.ToMan()
-	MarkdownDocTemplate = tmp
+	t.Cleanup(func() { MarkdownDocTemplate = tmp })
 
-	// Then
-	expect(t, err, errors.New(`template: cli:1: unclosed action`))
+	MarkdownDocTemplate = "{{ .App.Name"
+	_, err := ToMan(app)
+
+	require.ErrorContains(t, err, "template: cli:1: unclosed action")
 }
 
 func TestToManWithSection(t *testing.T) {
-	// Given
 	cmd := buildExtendedTestCommand()
 
-	// When
-	res, err := cmd.ToManWithSection(8)
+	res, err := ToManWithSection(cmd, 8)
 
-	// Then
 	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-full.man", res)
 }
 
 func Test_prepareUsageText(t *testing.T) {
 	t.Run("no UsageText provided", func(t *testing.T) {
-		// Given
-		cmd := Command{}
-
-		// When
-		res := prepareUsageText(&cmd)
-
-		// Then
-		expect(t, res, "")
+		cmd := &cli.Command{}
+		res := prepareUsageText(cmd)
+		require.Equal(t, "", res)
 	})
 
 	t.Run("single line UsageText", func(t *testing.T) {
-		// Given
-		cmd := Command{UsageText: "Single line usage text"}
-
-		// When
-		res := prepareUsageText(&cmd)
-
-		// Then
-		expect(t, res, ">Single line usage text\n")
+		cmd := &cli.Command{UsageText: "Single line usage text"}
+		res := prepareUsageText(cmd)
+		require.Equal(t, ">Single line usage text\n", res)
 	})
 
 	t.Run("multiline UsageText", func(t *testing.T) {
-		// Given
-		cmd := Command{
+		cmd := &cli.Command{
 			UsageText: `
 Usage for the usage text
 - Should be a part of the same code block
 `,
 		}
 
-		// When
-		res := prepareUsageText(&cmd)
+		res := prepareUsageText(cmd)
 
-		// Then
-		test := `    Usage for the usage text
+		require.Equal(t, `    Usage for the usage text
     - Should be a part of the same code block
-`
-		expect(t, res, test)
+`, res)
 	})
 
 	t.Run("multiline UsageText has formatted embedded markdown", func(t *testing.T) {
-		// Given
-		cmd := Command{
+		cmd := &cli.Command{
 			UsageText: `
 Usage for the usage text
 
@@ -323,53 +413,35 @@ Should be a part of the same code block
 `,
 		}
 
-		// When
-		res := prepareUsageText(&cmd)
+		res := prepareUsageText(cmd)
 
-		// Then
-		test := `    Usage for the usage text
+		require.Equal(t, `    Usage for the usage text
     
-    ` + "```" + `
+    `+"```"+`
     func() { ... }
-    ` + "```" + `
+    `+"```"+`
     
     Should be a part of the same code block
-`
-		expect(t, res, test)
+`, res)
 	})
 }
 
 func Test_prepareUsage(t *testing.T) {
 	t.Run("no Usage provided", func(t *testing.T) {
-		// Given
-		cmd := Command{}
-
-		// When
-		res := prepareUsage(&cmd, "")
-
-		// Then
-		expect(t, res, "")
+		cmd := &cli.Command{}
+		res := prepareUsage(cmd, "")
+		require.Equal(t, "", res)
 	})
 
 	t.Run("simple Usage", func(t *testing.T) {
-		// Given
-		cmd := Command{Usage: "simple usage text"}
-
-		// When
-		res := prepareUsage(&cmd, "")
-
-		// Then
-		expect(t, res, cmd.Usage+"\n")
+		cmd := &cli.Command{Usage: "simple usage text"}
+		res := prepareUsage(cmd, "")
+		require.Equal(t, cmd.Usage+"\n", res)
 	})
 
 	t.Run("simple Usage with UsageText", func(t *testing.T) {
-		// Given
-		cmd := Command{Usage: "simple usage text"}
-
-		// When
-		res := prepareUsage(&cmd, "a non-empty string")
-
-		// Then
-		expect(t, res, cmd.Usage+"\n\n")
+		cmd := &cli.Command{Usage: "simple usage text"}
+		res := prepareUsage(cmd, "a non-empty string")
+		require.Equal(t, cmd.Usage+"\n\n", res)
 	})
 }
