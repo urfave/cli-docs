@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"net/mail"
 	"os"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -162,10 +161,10 @@ func TestToMarkdownFull(t *testing.T) {
 }
 
 func TestToTabularMarkdown(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skipf("FIXME on windows (?)")
-		return
-	}
+	// 	if runtime.GOOS == "windows" {
+	// 		t.Skipf("FIXME on windows (?)")
+	// 		return
+	// 	}
 
 	app := buildExtendedTestCommand()
 
@@ -205,10 +204,10 @@ func TestToTabularMarkdownFailed(t *testing.T) {
 }
 
 func TestToTabularToFileBetweenTags(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skipf("FIXME on windows (?)")
-		return
-	}
+	// 	if runtime.GOOS == "windows" {
+	// 		t.Skipf("FIXME on windows (?)")
+	// 		return
+	// 	}
 
 	expectedDocs, fErr := testdata.ReadFile("testdata/expected-tabular-markdown-full.md")
 
@@ -353,10 +352,10 @@ func TestToMarkdown(t *testing.T) {
 }
 
 func TestToMan(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skipf("FIXME on windows (?)")
-		return
-	}
+	// 	if runtime.GOOS == "windows" {
+	// 		t.Skipf("FIXME on windows (?)")
+	// 		return
+	// 	}
 
 	app := buildExtendedTestCommand()
 
@@ -379,10 +378,10 @@ func TestToManParseError(t *testing.T) {
 }
 
 func TestToManWithSection(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skipf("FIXME on windows (?)")
-		return
-	}
+	// 	if runtime.GOOS == "windows" {
+	// 		t.Skipf("FIXME on windows (?)")
+	// 		return
+	// 	}
 
 	cmd := buildExtendedTestCommand()
 
