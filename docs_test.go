@@ -161,11 +161,6 @@ func TestToMarkdownFull(t *testing.T) {
 }
 
 func TestToTabularMarkdown(t *testing.T) {
-	// 	if runtime.GOOS == "windows" {
-	// 		t.Skipf("FIXME on windows (?)")
-	// 		return
-	// 	}
-
 	app := buildExtendedTestCommand()
 
 	t.Run("full", func(t *testing.T) {
@@ -204,11 +199,6 @@ func TestToTabularMarkdownFailed(t *testing.T) {
 }
 
 func TestToTabularToFileBetweenTags(t *testing.T) {
-	// 	if runtime.GOOS == "windows" {
-	// 		t.Skipf("FIXME on windows (?)")
-	// 		return
-	// 	}
-
 	expectedDocs, fErr := testdata.ReadFile("testdata/expected-tabular-markdown-full.md")
 
 	r := require.New(t)
@@ -352,11 +342,6 @@ func TestToMarkdown(t *testing.T) {
 }
 
 func TestToMan(t *testing.T) {
-	// 	if runtime.GOOS == "windows" {
-	// 		t.Skipf("FIXME on windows (?)")
-	// 		return
-	// 	}
-
 	app := buildExtendedTestCommand()
 
 	res, err := ToMan(app)
@@ -378,11 +363,6 @@ func TestToManParseError(t *testing.T) {
 }
 
 func TestToManWithSection(t *testing.T) {
-	// 	if runtime.GOOS == "windows" {
-	// 		t.Skipf("FIXME on windows (?)")
-	// 		return
-	// 	}
-
 	cmd := buildExtendedTestCommand()
 
 	res, err := ToManWithSection(cmd, 8)
