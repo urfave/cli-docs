@@ -22,7 +22,7 @@ urfave/cli-docs/v3 is an extended documentation library for use with urfave/cli/
  )
 ```
 
-3. Now use it e.g. to generate markdown docu from a command
+3. Now use it e.g. to generate markdown document from a command
 
 ```go
 func main() {
