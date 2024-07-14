@@ -28,6 +28,7 @@ urfave/cli-docs/v3 is an extended documentation library for use with urfave/cli/
 package main
 
 import (
+    "context"
     "fmt"
     "os"
 
@@ -39,7 +40,7 @@ func main() {
     app := &cli.Command{
         Name:  "greet",
         Usage: "say a greeting",
-        Action: func(c *cli.Context) error {
+        Action: func(ctx context.Context, c *cli.Command) error {
             fmt.Println("Greetings")
             return nil
         },
@@ -79,4 +80,5 @@ greet
 ```
 greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 ```
+
 ````
