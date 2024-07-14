@@ -25,8 +25,26 @@ urfave/cli-docs/v3 is an extended documentation library for use with urfave/cli/
 3. Now use it e.g. to generate markdown document from a command
 
 ```go
+package main
+
+import (
+    "fmt"
+    "os"
+
+    docs "github.com/urfave/cli-docs/v3"
+    cli "github.com/urfave/cli/v3"
+)
+
 func main() {
-    app := newApp()
+    app := &cli.Command{
+        Name:  "greet",
+        Usage: "say a greeting",
+        Action: func(c *cli.Context) error {
+            fmt.Println("Greetings")
+            return nil
+        },
+    }
+
     md, err := docs.ToMarkdown(app)
     if err != nil {
         panic(err)
@@ -42,3 +60,23 @@ func main() {
     }
 }
 ```
+
+This will create a file `cli-docs.md` with content:
+
+````md
+# CLI
+
+# NAME
+
+greet - say a greeting
+
+# SYNOPSIS
+
+greet
+
+**Usage**:
+
+```
+greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
+```
+````
