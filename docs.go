@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"runtime"
 	"sort"
@@ -277,7 +278,7 @@ func prepareFlags(
 // flagDetails returns a string containing the flags metadata
 func flagDetails(flag cli.DocGenerationFlag) string {
 	description := flag.GetUsage()
-	value := flag.GetValue()
+	value := getFlagDefaultValue(flag)
 	if value != "" {
 		description += " (default: " + value + ")"
 	}
@@ -404,7 +405,7 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			Usage:      tt.PrepareMultilineString(flag.GetUsage()),
 			EnvVars:    flag.GetEnvVars(),
 			TakesValue: flag.TakesValue(),
-			Default:    flag.GetValue(),
+			Default:    getFlagDefaultValue(flag),
 		}
 
 		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool {
@@ -553,4 +554,35 @@ func (tabularTemplate) Prettify(s string) string {
 	s = strings.Trim(s, " \n")                                   // trim spaces and newlines
 
 	return s + "\n" // add an extra newline
+}
+
+// getFlagDefaultValue returns the default value of a flag. Previously, the [cli.DocGenerationFlag] interface included
+// a GetValue string method, but it was removed in https://github.com/urfave/cli/pull/1988.
+// This function serves as a workaround, attempting to retrieve the value using the removed method; if that fails, it
+// tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
+func getFlagDefaultValue(f cli.DocGenerationFlag) string {
+	if !f.TakesValue() {
+		return ""
+	}
+
+	if v, ok := f.(interface{ GetValue() string }); ok {
+		return v.GetValue()
+	}
+
+	var ref = reflect.ValueOf(f)
+	if ref.Kind() != reflect.Ptr {
+		return ""
+	} else {
+		ref = ref.Elem()
+	}
+
+	if ref.Kind() != reflect.Struct {
+		return ""
+	}
+
+	if val := ref.FieldByName("Value"); val.IsValid() && val.Type().Kind() != reflect.Bool {
+		return fmt.Sprintf("%v", val.Interface())
+	}
+
+	return ""
 }
