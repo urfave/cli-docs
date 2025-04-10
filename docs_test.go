@@ -3,6 +3,7 @@ package docs
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"io"
 	"io/fs"
 	"net/mail"
@@ -61,6 +62,11 @@ func buildExtendedTestCommand() *cli.Command {
 			&cli.BoolFlag{
 				Name:   "hidden-flag",
 				Hidden: true,
+			},
+			&cli.StringFlag{
+				Name:        "dir",
+				Value:       pwd(),
+				DefaultText: "$PWD",
 			},
 		},
 		Commands: []*cli.Command{{
@@ -180,6 +186,14 @@ func TestToTabularMarkdown(t *testing.T) {
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-custom-app-path.md", res)
 	})
+}
+
+func pwd() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	return pwd
 }
 
 func TestToTabularMarkdownFailed(t *testing.T) {
