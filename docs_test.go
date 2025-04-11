@@ -65,7 +65,7 @@ func buildExtendedTestCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:        "dir",
 				Value:       pwd(),
-				DefaultText: "$PWD",
+				DefaultText: "\".\"",
 			},
 		},
 		Commands: []*cli.Command{{

@@ -27,7 +27,7 @@ app [first_arg] [second_arg]
 
 **--another-flag, -b**: another usage text
 
-**--dir**="":  (default: $PWD)
+**--dir**="":  (default: ".")
 
 **--flag, --fl, -f**="": 
 
