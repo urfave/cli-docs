@@ -15,6 +15,7 @@ greet
 
 .nf
 [--another-flag|-b]
+[--dir]=[value]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
 
@@ -42,6 +43,9 @@ app [first_arg] [second_arg]
 .SH GLOBAL OPTIONS
 .PP
 \fB--another-flag, -b\fP: another usage text
+
+.PP
+\fB--dir\fP="":  (default: $PWD)
 
 .PP
 \fB--flag, --fl, -f\fP="":

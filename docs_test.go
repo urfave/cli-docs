@@ -3,7 +3,6 @@ package docs
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"io"
 	"io/fs"
 	"net/mail"
@@ -189,10 +188,7 @@ func TestToTabularMarkdown(t *testing.T) {
 }
 
 func pwd() string {
-	pwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
+	pwd, _ := os.Getwd()
 	return pwd
 }
 

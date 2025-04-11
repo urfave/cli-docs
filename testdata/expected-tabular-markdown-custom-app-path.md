@@ -19,6 +19,7 @@ Global flags:
 | `--socket="…"` (`-s`)       | some 'usage' text  |    `value`    |         *none*          |
 | `--flag="…"` (`--fl`, `-f`) |                    |               |         *none*          |
 | `--another-flag` (`-b`)     | another usage text |    `false`    | `EXAMPLE_VARIABLE_NAME` |
+| `--dir="…"`                 |                    |    `$PWD`     |         *none*          |
 
 ### `config` command (aliases: `c`)
 

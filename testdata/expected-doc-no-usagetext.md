@@ -8,6 +8,7 @@ greet
 
 ```
 [--another-flag|-b]
+[--dir]=[value]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
 ```
@@ -25,6 +26,8 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 # GLOBAL OPTIONS
 
 **--another-flag, -b**: another usage text
+
+**--dir**="":  (default: $PWD)
 
 **--flag, --fl, -f**="": 
 
