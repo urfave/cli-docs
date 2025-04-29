@@ -27,7 +27,7 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 **--another-flag, -b**: another usage text
 
-**--dir**="":  (default: ".")
+**--dir**="":  (default: .)
 
 **--flag, --fl, -f**="": 
 

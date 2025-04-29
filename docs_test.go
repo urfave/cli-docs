@@ -24,8 +24,8 @@ func expectFileContent(t *testing.T, file, got string) {
 	r := require.New(t)
 	r.NoError(err)
 	r.Equal(
-		string(normalizeNewlines([]byte(got))),
 		string(normalizeNewlines(data)),
+		string(normalizeNewlines([]byte(got))),
 	)
 }
 
@@ -45,11 +45,12 @@ func buildExtendedTestCommand() *cli.Command {
 		Name:   "greet",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:      "socket",
-				Aliases:   []string{"s"},
-				Usage:     "some 'usage' text",
-				Value:     "value",
-				TakesFile: true,
+				Name:        "socket",
+				Aliases:     []string{"s"},
+				Usage:       "some 'usage' text",
+				Value:       "value",
+				DefaultText: "value",
+				TakesFile:   true,
 			},
 			&cli.StringFlag{Name: "flag", Aliases: []string{"fl", "f"}},
 			&cli.BoolFlag{
@@ -65,7 +66,7 @@ func buildExtendedTestCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:        "dir",
 				Value:       pwd(),
-				DefaultText: "\".\"",
+				DefaultText: ".",
 			},
 		},
 		Commands: []*cli.Command{{

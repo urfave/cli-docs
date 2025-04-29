@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"regexp"
 	"runtime"
 	"sort"
@@ -564,23 +563,5 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) string {
 	if !f.TakesValue() {
 		return ""
 	}
-
-	var ref = reflect.ValueOf(f)
-	if ref.Kind() == reflect.Ptr {
-		ref = ref.Elem()
-	}
-
-	if ref.Kind() != reflect.Struct {
-		return ""
-	}
-
-	if defaultTextVal := ref.FieldByName("DefaultText"); defaultTextVal.IsValid() && defaultTextVal.Kind() == reflect.String && defaultTextVal.String() != "" {
-		return defaultTextVal.String()
-	}
-
-	if val := ref.FieldByName("Value"); val.IsValid() && val.Type().Kind() != reflect.Bool {
-		return fmt.Sprintf("%v", val.Interface())
-	}
-
-	return ""
+	return f.GetDefaultText()
 }
