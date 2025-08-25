@@ -355,6 +355,7 @@ type (
 		TakesValue bool
 		Default    string
 		EnvVars    []string
+		Type       string
 	}
 )
 
@@ -406,6 +407,7 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			EnvVars:    flag.GetEnvVars(),
 			TakesValue: flag.TakesValue(),
 			Default:    getFlagDefaultValue(flag),
+			Type:       flag.TypeName(),
 		}
 
 		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool {
