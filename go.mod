@@ -1,11 +1,11 @@
 module github.com/urfave/cli-docs/v3
 
-go 1.18
+go 1.24.4
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2
-	github.com/stretchr/testify v1.9.0
-	github.com/urfave/cli/v3 v3.0.0-alpha9.2
+	github.com/stretchr/testify v1.10.0
+	github.com/urfave/cli/v3 v3.4.1
 )
 
 require (

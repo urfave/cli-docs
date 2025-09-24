@@ -14,11 +14,11 @@ $ /usr/local/bin [GLOBAL FLAGS] [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
 
 Global flags:
 
-| Name                        | Description        | Default value |  Environment variables  |
-|-----------------------------|--------------------|:-------------:|:-----------------------:|
-| `--socket="…"` (`-s`)       | some 'usage' text  |    `value`    |         *none*          |
-| `--flag="…"` (`--fl`, `-f`) |                    |               |         *none*          |
-| `--another-flag` (`-b`)     | another usage text |    `false`    | `EXAMPLE_VARIABLE_NAME` |
+| Name                        | Description        | Type   | Default value |  Environment variables  |
+|-----------------------------|--------------------|--------|:-------------:|:-----------------------:|
+| `--socket="…"` (`-s`)       | some 'usage' text  | string |    `value`    |         *none*          |
+| `--flag="…"` (`--fl`, `-f`) |                    | string |               |         *none*          |
+| `--another-flag` (`-b`)     | another usage text | bool   |    `false`    | `EXAMPLE_VARIABLE_NAME` |
 
 ### `config` command (aliases: `c`)
 
@@ -32,10 +32,10 @@ $ /usr/local/bin [GLOBAL FLAGS] config [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description        | Default value | Environment variables |
-|-----------------------------|--------------------|:-------------:|:---------------------:|
-| `--flag="…"` (`--fl`, `-f`) |                    |               |        *none*         |
-| `--another-flag` (`-b`)     | another usage text |    `false`    |        *none*         |
+| Name                        | Description        | Type   | Default value | Environment variables |
+|-----------------------------|--------------------|--------|:-------------:|:---------------------:|
+| `--flag="…"` (`--fl`, `-f`) |                    | string |               |        *none*         |
+| `--another-flag` (`-b`)     | another usage text | bool   |    `false`    |        *none*         |
 
 ### `config sub-config` subcommand (aliases: `s`, `ss`)
 
@@ -49,10 +49,10 @@ $ /usr/local/bin [GLOBAL FLAGS] config sub-config [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                                | Description     | Default value | Environment variables |
-|-------------------------------------|-----------------|:-------------:|:---------------------:|
-| `--sub-flag="…"` (`--sub-fl`, `-s`) |                 |               |        *none*         |
-| `--sub-command-flag` (`-s`)         | some usage text |    `false`    |        *none*         |
+| Name                                | Description     | Type   | Default value | Environment variables |
+|-------------------------------------|-----------------|--------|:-------------:|:---------------------:|
+| `--sub-flag="…"` (`--sub-fl`, `-s`) |                 | string |               |        *none*         |
+| `--sub-command-flag` (`-s`)         | some usage text | bool   |    `false`    |        *none*         |
 
 ### `info` command (aliases: `i`, `in`)
 
@@ -93,10 +93,10 @@ $ /usr/local/bin [GLOBAL FLAGS] usage [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description        | Default value | Environment variables |
-|-----------------------------|--------------------|:-------------:|:---------------------:|
-| `--flag="…"` (`--fl`, `-f`) |                    |               |        *none*         |
-| `--another-flag` (`-b`)     | another usage text |    `false`    |        *none*         |
+| Name                        | Description        | Type   | Default value | Environment variables |
+|-----------------------------|--------------------|--------|:-------------:|:---------------------:|
+| `--flag="…"` (`--fl`, `-f`) |                    | string |               |        *none*         |
+| `--another-flag` (`-b`)     | another usage text | bool   |    `false`    |        *none*         |
 
 ### `usage sub-usage` subcommand (aliases: `su`)
 
@@ -112,6 +112,6 @@ $ /usr/local/bin [GLOBAL FLAGS] usage sub-usage [COMMAND FLAGS] [ARGUMENTS...]
 
 The following flags are supported:
 
-| Name                        | Description     | Default value | Environment variables |
-|-----------------------------|-----------------|:-------------:|:---------------------:|
-| `--sub-command-flag` (`-s`) | some usage text |    `false`    |        *none*         |
+| Name                        | Description     | Type | Default value | Environment variables |
+|-----------------------------|-----------------|------|:-------------:|:---------------------:|
+| `--sub-command-flag` (`-s`) | some usage text | bool |    `false`    |        *none*         |
