@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/mail"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -183,6 +184,49 @@ func TestToTabularMarkdown(t *testing.T) {
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-custom-app-path.md", res)
 	})
+}
+
+func TestPrepareCommandsSkipsNestedHelp(t *testing.T) {
+	tmpl := tabularTemplate{}
+	commands := []*cli.Command{
+		{Name: "help"},
+		{
+			Name: "config",
+			Commands: []*cli.Command{
+				{Name: "help"},
+				{Name: "sub"},
+			},
+		},
+	}
+
+	result := tmpl.PrepareCommands(commands, "app", "", 0)
+	require.Len(t, result, 2)
+	require.Equal(t, "help", result[0].Name)
+	require.Len(t, result[1].SubCommands, 1)
+	require.Equal(t, "config sub", result[1].SubCommands[0].Name)
+	require.Equal(t, uint(0), result[0].Level)
+	require.Equal(t, uint(0), result[1].Level)
+	require.Equal(t, uint(1), result[1].SubCommands[0].Level)
+}
+
+func TestPrepareCommandsMarkdownSkipsNestedHelp(t *testing.T) {
+	commands := []*cli.Command{
+		{Name: "help"},
+		{
+			Name: "config",
+			Commands: []*cli.Command{
+				{Name: "help"},
+				{Name: "sub"},
+			},
+		},
+	}
+
+	sections := prepareCommands(commands, 0)
+	joined := strings.Join(sections, "\n")
+	require.Contains(t, joined, "## help\n")
+	require.Contains(t, joined, "## config\n")
+	require.Contains(t, joined, "### sub\n")
+	require.NotContains(t, joined, "### help")
 }
 
 func TestToTabularMarkdownFailed(t *testing.T) {
