@@ -10,6 +10,7 @@ greet
 [--another-flag|-b]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
+[--temp-dir]=[value]
 ```
 
 # DESCRIPTION
@@ -29,6 +30,8 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 **--flag, --fl, -f**="": 
 
 **--socket, -s**="": some 'usage' text (default: value)
+
+**--temp-dir**="":  (default: test temp dir)
 
 
 # COMMANDS

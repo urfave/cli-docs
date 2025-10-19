@@ -39,7 +39,7 @@ func normalizeNewlines(d []byte) []byte {
 	)
 }
 
-func buildExtendedTestCommand() *cli.Command {
+func buildExtendedTestCommand(t *testing.T) *cli.Command {
 	return &cli.Command{
 		Writer: io.Discard,
 		Name:   "greet",
@@ -61,6 +61,11 @@ func buildExtendedTestCommand() *cli.Command {
 			&cli.BoolFlag{
 				Name:   "hidden-flag",
 				Hidden: true,
+			},
+			&cli.StringFlag{
+				Name:        "temp-dir",
+				Value:       t.TempDir(),
+				DefaultText: "test temp dir",
 			},
 		},
 		Commands: []*cli.Command{{
@@ -154,14 +159,14 @@ Should be a part of the same code block
 }
 
 func TestToMarkdownFull(t *testing.T) {
-	cmd := buildExtendedTestCommand()
+	cmd := buildExtendedTestCommand(t)
 	res, err := ToMarkdown(cmd)
 	require.NoError(t, err)
 	expectFileContent(t, "testdata/expected-doc-full.md", res)
 }
 
 func TestToTabularMarkdown(t *testing.T) {
-	app := buildExtendedTestCommand()
+	app := buildExtendedTestCommand(t)
 
 	t.Run("full", func(t *testing.T) {
 		res, err := ToTabularMarkdown(app, "app")
@@ -188,7 +193,7 @@ func TestToTabularMarkdownFailed(t *testing.T) {
 
 	MarkdownTabularDocTemplate = "{{ .Foo }}"
 
-	app := buildExtendedTestCommand()
+	app := buildExtendedTestCommand(t)
 
 	res, err := ToTabularMarkdown(app, "")
 
@@ -223,7 +228,7 @@ Some other text`)
 		r.NoError(err)
 		_ = tmpFile.Close()
 
-		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name()))
+		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(t), "app", tmpFile.Name()))
 
 		content, err := os.ReadFile(tmpFile.Name())
 		r.NoError(err)
@@ -263,7 +268,7 @@ Some other text`)
 		r.NoError(err)
 		_ = tmpFile.Close()
 
-		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name(), "foo_BAR|baz", "lorem+ipsum"))
+		r.NoError(ToTabularToFileBetweenTags(buildExtendedTestCommand(t), "app", tmpFile.Name(), "foo_BAR|baz", "lorem+ipsum"))
 
 		content, err := os.ReadFile(tmpFile.Name())
 		r.NoError(err)
@@ -293,7 +298,7 @@ Some other text`))
 
 		r.NoError(os.Remove(tmpFile.Name()))
 
-		err = ToTabularToFileBetweenTags(buildExtendedTestCommand(), "app", tmpFile.Name())
+		err = ToTabularToFileBetweenTags(buildExtendedTestCommand(t), "app", tmpFile.Name())
 
 		r.ErrorIs(err, fs.ErrNotExist)
 	})
@@ -301,7 +306,7 @@ Some other text`))
 
 func TestToMarkdown(t *testing.T) {
 	t.Run("no flags", func(t *testing.T) {
-		app := buildExtendedTestCommand()
+		app := buildExtendedTestCommand(t)
 		app.Flags = nil
 
 		res, err := ToMarkdown(app)
@@ -311,7 +316,7 @@ func TestToMarkdown(t *testing.T) {
 	})
 
 	t.Run("no commands", func(t *testing.T) {
-		app := buildExtendedTestCommand()
+		app := buildExtendedTestCommand(t)
 		app.Commands = nil
 
 		res, err := ToMarkdown(app)
@@ -321,7 +326,7 @@ func TestToMarkdown(t *testing.T) {
 	})
 
 	t.Run("no authors", func(t *testing.T) {
-		app := buildExtendedTestCommand()
+		app := buildExtendedTestCommand(t)
 		app.Authors = []any{}
 
 		res, err := ToMarkdown(app)
@@ -331,7 +336,7 @@ func TestToMarkdown(t *testing.T) {
 	})
 
 	t.Run("no usage text", func(t *testing.T) {
-		app := buildExtendedTestCommand()
+		app := buildExtendedTestCommand(t)
 		app.UsageText = ""
 
 		res, err := ToMarkdown(app)
@@ -342,7 +347,7 @@ func TestToMarkdown(t *testing.T) {
 }
 
 func TestToMan(t *testing.T) {
-	app := buildExtendedTestCommand()
+	app := buildExtendedTestCommand(t)
 
 	res, err := ToMan(app)
 
@@ -351,7 +356,7 @@ func TestToMan(t *testing.T) {
 }
 
 func TestToManParseError(t *testing.T) {
-	app := buildExtendedTestCommand()
+	app := buildExtendedTestCommand(t)
 
 	tmp := MarkdownDocTemplate
 	t.Cleanup(func() { MarkdownDocTemplate = tmp })
@@ -363,7 +368,7 @@ func TestToManParseError(t *testing.T) {
 }
 
 func TestToManWithSection(t *testing.T) {
-	cmd := buildExtendedTestCommand()
+	cmd := buildExtendedTestCommand(t)
 
 	res, err := ToManWithSection(cmd, 8)
 

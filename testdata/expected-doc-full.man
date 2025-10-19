@@ -17,6 +17,7 @@ greet
 [--another-flag|-b]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
+[--temp-dir]=[value]
 
 .fi
 .RE
@@ -48,6 +49,9 @@ app [first_arg] [second_arg]
 
 .PP
 \fB--socket, -s\fP="": some 'usage' text (default: value)
+
+.PP
+\fB--temp-dir\fP="":  (default: test temp dir)
 
 
 .SH COMMANDS

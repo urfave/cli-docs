@@ -14,11 +14,12 @@ $ /usr/local/bin [GLOBAL FLAGS] [COMMAND] [COMMAND FLAGS] [ARGUMENTS...]
 
 Global flags:
 
-| Name                        | Description        | Type   | Default value |  Environment variables  |
-|-----------------------------|--------------------|--------|:-------------:|:-----------------------:|
-| `--socket="…"` (`-s`)       | some 'usage' text  | string |    `value`    |         *none*          |
-| `--flag="…"` (`--fl`, `-f`) |                    | string |               |         *none*          |
-| `--another-flag` (`-b`)     | another usage text | bool   |    `false`    | `EXAMPLE_VARIABLE_NAME` |
+| Name                        | Description        | Type   |  Default value  |  Environment variables  |
+|-----------------------------|--------------------|--------|:---------------:|:-----------------------:|
+| `--socket="…"` (`-s`)       | some 'usage' text  | string |     `value`     |         *none*          |
+| `--flag="…"` (`--fl`, `-f`) |                    | string |                 |         *none*          |
+| `--another-flag` (`-b`)     | another usage text | bool   |     `false`     | `EXAMPLE_VARIABLE_NAME` |
+| `--temp-dir="…"`            |                    | string | `test temp dir` |         *none*          |
 
 ### `config` command (aliases: `c`)
 

@@ -10,6 +10,7 @@ greet
 [--another-flag|-b]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
+[--temp-dir]=[value]
 ```
 
 # DESCRIPTION
@@ -29,4 +30,6 @@ app [first_arg] [second_arg]
 **--flag, --fl, -f**="": 
 
 **--socket, -s**="": some 'usage' text (default: value)
+
+**--temp-dir**="":  (default: test temp dir)
 
