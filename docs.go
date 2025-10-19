@@ -278,8 +278,10 @@ func prepareFlags(
 // flagDetails returns a string containing the flags metadata
 func flagDetails(flag cli.DocGenerationFlag) string {
 	description := flag.GetUsage()
-	value := getFlagDefaultValue(flag)
-	if value != "" {
+	value, defaultText := getFlagDefaultValue(flag)
+	if defaultText != "" {
+		description += " (default: " + value + ")"
+	} else if value != "" {
 		description += " (default: " + value + ")"
 	}
 	return ": " + description
@@ -402,11 +404,19 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			continue
 		}
 
-		var f = cliTabularFlagTemplate{
+		value, defaultText := getFlagDefaultValue(flag)
+		defaultValue := ""
+		if defaultText != "" {
+			defaultValue = defaultText
+		} else if value != "" {
+			defaultValue = fmt.Sprintf("`%s`", value)
+		}
+
+		f := cliTabularFlagTemplate{
 			Usage:      tt.PrepareMultilineString(flag.GetUsage()),
 			EnvVars:    flag.GetEnvVars(),
 			TakesValue: flag.TakesValue(),
-			Default:    getFlagDefaultValue(flag),
+			Default:    defaultValue,
 			Type:       flag.TypeName(),
 		}
 
@@ -562,29 +572,43 @@ func (tabularTemplate) Prettify(s string) string {
 // a GetValue string method, but it was removed in https://github.com/urfave/cli/pull/1988.
 // This function serves as a workaround, attempting to retrieve the value using the removed method; if that fails, it
 // tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
-func getFlagDefaultValue(f cli.DocGenerationFlag) string {
+// It also checks if there is a DefaultText and if it differs from value and is set we will return that one.
+func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 	if !f.TakesValue() {
-		return ""
+		return "", ""
+	}
+
+	var defaultText string
+	if v, ok := f.(interface{ GetDefaultText() string }); ok {
+		defaultText = v.GetDefaultText()
 	}
 
 	if v, ok := f.(interface{ GetValue() string }); ok {
-		return v.GetValue()
+		value = v.GetValue()
+
+		// GetDefaultText also returns GetValue if default text not set
+		// but quotes it
+		if strings.Trim(defaultText, "\"") == value {
+			return value, ""
+		} else if defaultText != "" {
+			return "", defaultText
+		}
 	}
 
 	var ref = reflect.ValueOf(f)
 	if ref.Kind() != reflect.Ptr {
-		return ""
+		return "", ""
 	} else {
 		ref = ref.Elem()
 	}
 
 	if ref.Kind() != reflect.Struct {
-		return ""
+		return "", ""
 	}
 
 	if val := ref.FieldByName("Value"); val.IsValid() && val.Type().Kind() != reflect.Bool {
-		return fmt.Sprintf("%v", val.Interface())
+		return fmt.Sprintf("%v", val.Interface()), ""
 	}
 
-	return ""
+	return "", ""
 }

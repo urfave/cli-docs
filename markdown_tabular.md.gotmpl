@@ -5,7 +5,7 @@
 {{- /**/ -}} | `{{ $flag.Name }}{{ if $flag.TakesValue }}="…"{{ end }}` {{ if $flag.Aliases }}(`{{ join $flag.Aliases "`, `" }}`) {{ end }}
 {{- /**/ -}} | {{ $flag.Usage }}
 {{- /**/ -}} | {{ $flag.Type }}
-{{- /**/ -}} | {{ if $flag.Default }}`{{ $flag.Default }}`{{ end }}
+{{- /**/ -}} | {{ if $flag.Default }}{{ $flag.Default }}{{ end }}
 {{- /**/ -}} | {{ if $flag.EnvVars }}`{{ join $flag.EnvVars "`, `" }}`{{ else }}*none*{{ end }}
 {{- /**/ -}} |
 {{   end }}
