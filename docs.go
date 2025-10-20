@@ -411,9 +411,6 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 		} else if value != "" {
 			defaultValue = fmt.Sprintf("`%s`", value)
 		}
-		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool && defaultText == "" {
-			defaultValue = fmt.Sprintf("`%s`", strconv.FormatBool(boolFlag.Value))
-		}
 
 		f := cliTabularFlagTemplate{
 			Usage:      tt.PrepareMultilineString(flag.GetUsage()),
@@ -577,35 +574,18 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 		return "", ""
 	}
 
-	if _, ok := f.(interface{ GetDefaultText() string }); ok {
-		// GetDefaultText also returns GetValue so we have to use reflection
-		if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
-			if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
-				if defaultText := val.Interface().(string); defaultText != "" {
-					return "", defaultText
-				}
+	// GetDefaultText also returns GetValue so we have to use reflection
+	if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
+		if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
+			if defaultText := val.Interface().(string); defaultText != "" {
+				return "", defaultText
 			}
 		}
 	}
 
-	if v, ok := f.(interface{ GetValue() string }); ok {
-		return v.GetValue(), ""
+	if boolFlag, isBool := f.(*cli.BoolFlag); isBool {
+		return strconv.FormatBool(boolFlag.Value), ""
 	}
 
-	ref := reflect.ValueOf(f)
-	if ref.Kind() != reflect.Ptr {
-		return "", ""
-	} else {
-		ref = ref.Elem()
-	}
-
-	if ref.Kind() != reflect.Struct {
-		return "", ""
-	}
-
-	if val := ref.FieldByName("Value"); val.IsValid() && val.Type().Kind() != reflect.Bool {
-		return fmt.Sprintf("%v", val.Interface()), ""
-	}
-
-	return "", ""
+	return f.GetValue(), ""
 }
