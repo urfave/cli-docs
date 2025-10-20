@@ -571,7 +571,7 @@ func (tabularTemplate) Prettify(s string) string {
 // a GetValue string method, but it was removed in https://github.com/urfave/cli/pull/1988.
 // This function serves as a workaround, attempting to retrieve the value using the removed method; if that fails, it
 // tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
-// It also checks if there is a DefaultText and if it differs from value and is set we will return that one.
+// It also checks if there is a DefaultText and if set returns it.
 func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 	if !f.TakesValue() {
 		return "", ""
