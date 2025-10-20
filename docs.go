@@ -278,8 +278,10 @@ func prepareFlags(
 // flagDetails returns a string containing the flags metadata
 func flagDetails(flag cli.DocGenerationFlag) string {
 	description := flag.GetUsage()
-	value := getFlagDefaultValue(flag)
-	if value != "" {
+	value, defaultText := getFlagDefaultValue(flag)
+	if defaultText != "" {
+		description += " (default: " + defaultText + ")"
+	} else if value != "" {
 		description += " (default: " + value + ")"
 	}
 	return ": " + description
@@ -402,16 +404,20 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			continue
 		}
 
+		value, defaultText := getFlagDefaultValue(flag)
+		defaultValue := ""
+		if defaultText != "" {
+			defaultValue = defaultText
+		} else if value != "" {
+			defaultValue = fmt.Sprintf("`%s`", value)
+		}
+
 		f := cliTabularFlagTemplate{
 			Usage:      tt.PrepareMultilineString(flag.GetUsage()),
 			EnvVars:    flag.GetEnvVars(),
 			TakesValue: flag.TakesValue(),
-			Default:    getFlagDefaultValue(flag),
+			Default:    defaultValue,
 			Type:       flag.TypeName(),
-		}
-
-		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool {
-			f.Default = strconv.FormatBool(boolFlag.Value)
 		}
 
 		for i, name := range appFlag.Names() {
@@ -558,33 +564,24 @@ func (tabularTemplate) Prettify(s string) string {
 	return s + "\n" // add an extra newline
 }
 
-// getFlagDefaultValue returns the default value of a flag. Previously, the [cli.DocGenerationFlag] interface included
-// a GetValue string method, but it was removed in https://github.com/urfave/cli/pull/1988.
-// This function serves as a workaround, attempting to retrieve the value using the removed method; if that fails, it
-// tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
-func getFlagDefaultValue(f cli.DocGenerationFlag) string {
+// getFlagDefaultValue returns the default text or default value of a flag.
+// cli.BoolFlag will always return an default.
+func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
+	// GetDefaultText also returns GetValue so we have to use reflection
+	if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
+		if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
+			if defaultText := val.Interface().(string); defaultText != "" {
+				return "", defaultText
+			}
+		}
+	}
+
 	if !f.TakesValue() {
-		return ""
+		if boolFlag, isBool := f.(*cli.BoolFlag); isBool {
+			return strconv.FormatBool(boolFlag.Value), ""
+		}
+		return "", ""
 	}
 
-	if v, ok := f.(interface{ GetValue() string }); ok {
-		return v.GetValue()
-	}
-
-	ref := reflect.ValueOf(f)
-	if ref.Kind() != reflect.Ptr {
-		return ""
-	} else {
-		ref = ref.Elem()
-	}
-
-	if ref.Kind() != reflect.Struct {
-		return ""
-	}
-
-	if val := ref.FieldByName("Value"); val.IsValid() && val.Type().Kind() != reflect.Bool {
-		return fmt.Sprintf("%v", val.Interface())
-	}
-
-	return ""
+	return f.GetValue(), ""
 }

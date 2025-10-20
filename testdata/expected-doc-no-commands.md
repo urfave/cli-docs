@@ -10,6 +10,7 @@ greet
 [--another-flag|-b]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
+[--temp-dir]=[value]
 ```
 
 # DESCRIPTION
@@ -24,9 +25,11 @@ app [first_arg] [second_arg]
 
 # GLOBAL OPTIONS
 
-**--another-flag, -b**: another usage text
+**--another-flag, -b**: another usage text (default: false)
 
 **--flag, --fl, -f**="": 
 
 **--socket, -s**="": some 'usage' text (default: value)
+
+**--temp-dir**="":  (default: test temp dir)
 

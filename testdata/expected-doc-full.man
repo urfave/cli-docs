@@ -17,6 +17,7 @@ greet
 [--another-flag|-b]
 [--flag|--fl|-f]=[value]
 [--socket|-s]=[value]
+[--temp-dir]=[value]
 
 .fi
 .RE
@@ -41,13 +42,16 @@ app [first_arg] [second_arg]
 
 .SH GLOBAL OPTIONS
 .PP
-\fB--another-flag, -b\fP: another usage text
+\fB--another-flag, -b\fP: another usage text (default: false)
 
 .PP
 \fB--flag, --fl, -f\fP="":
 
 .PP
 \fB--socket, -s\fP="": some 'usage' text (default: value)
+
+.PP
+\fB--temp-dir\fP="":  (default: test temp dir)
 
 
 .SH COMMANDS
@@ -56,7 +60,7 @@ app [first_arg] [second_arg]
 another usage test
 
 .PP
-\fB--another-flag, -b\fP: another usage text
+\fB--another-flag, -b\fP: another usage text (default: false)
 
 .PP
 \fB--flag, --fl, -f\fP="":
@@ -66,7 +70,7 @@ another usage test
 another usage test
 
 .PP
-\fB--sub-command-flag, -s\fP: some usage text
+\fB--sub-command-flag, -s\fP: some usage text (default: false)
 
 .PP
 \fB--sub-flag, --sub-fl, -s\fP="":
@@ -99,7 +103,7 @@ Should be a part of the same code block
 .RE
 
 .PP
-\fB--another-flag, -b\fP: another usage text
+\fB--another-flag, -b\fP: another usage text (default: false)
 
 .PP
 \fB--flag, --fl, -f\fP="":
@@ -117,4 +121,4 @@ Single line of UsageText
 .RE
 
 .PP
-\fB--sub-command-flag, -s\fP: some usage text
+\fB--sub-command-flag, -s\fP: some usage text (default: false)

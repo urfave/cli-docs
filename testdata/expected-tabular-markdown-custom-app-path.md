@@ -19,6 +19,7 @@ Global flags:
 | `--socket="…"` (`-s`)       | some 'usage' text  | string |    `value`    |         *none*          |
 | `--flag="…"` (`--fl`, `-f`) |                    | string |               |         *none*          |
 | `--another-flag` (`-b`)     | another usage text | bool   |    `false`    | `EXAMPLE_VARIABLE_NAME` |
+| `--temp-dir="…"`            |                    | string | test temp dir |         *none*          |
 
 ### `config` command (aliases: `c`)
 
