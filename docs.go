@@ -280,7 +280,7 @@ func flagDetails(flag cli.DocGenerationFlag) string {
 	description := flag.GetUsage()
 	value, defaultText := getFlagDefaultValue(flag)
 	if defaultText != "" {
-		description += " (default: " + value + ")"
+		description += " (default: " + defaultText + ")"
 	} else if value != "" {
 		description += " (default: " + value + ")"
 	}
