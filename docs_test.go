@@ -13,10 +13,8 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var (
-	//go:embed testdata
-	testdata embed.FS
-)
+//go:embed testdata
+var testdata embed.FS
 
 func expectFileContent(t *testing.T, file, got string) {
 	data, err := testdata.ReadFile(file)
