@@ -60,7 +60,7 @@ func buildFlagTest(t *testing.T) *cli.Command {
 			&cli.DurationFlag{Name: "string-empty"},
 			&cli.DurationFlag{Name: "string-set", Value: 12 * time.Minute},
 			&cli.TimestampFlag{Name: "string-empty"},
-			&cli.TimestampFlag{Name: "string-set", Value: time.Unix(1729456800, 0)},
+			&cli.TimestampFlag{Name: "string-set", Value: time.Unix(1729456800, 0).UTC()},
 		}}
 }
 

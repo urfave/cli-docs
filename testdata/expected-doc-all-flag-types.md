@@ -57,7 +57,7 @@ main [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 **--string-set**="":  (default: 12m0s)
 
-**--string-set**="":  (default: 2024-10-20 22:40:00 +0200 CEST)
+**--string-set**="":  (default: 2024-10-20 20:40:00 +0000 UTC)
 
 **--string-set**="":  (default: 21)
 
