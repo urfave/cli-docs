@@ -570,10 +570,6 @@ func (tabularTemplate) Prettify(s string) string {
 // tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
 // It also checks if there is a DefaultText and if set returns it.
 func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
-	if !f.TakesValue() {
-		return "", ""
-	}
-
 	// GetDefaultText also returns GetValue so we have to use reflection
 	if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
 		if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
@@ -583,8 +579,11 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 		}
 	}
 
-	if boolFlag, isBool := f.(*cli.BoolFlag); isBool {
-		return strconv.FormatBool(boolFlag.Value), ""
+	if !f.TakesValue() {
+		if boolFlag, isBool := f.(*cli.BoolFlag); isBool {
+			return strconv.FormatBool(boolFlag.Value), ""
+		}
+		return "", ""
 	}
 
 	return f.GetValue(), ""

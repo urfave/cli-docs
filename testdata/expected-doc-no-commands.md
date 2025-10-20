@@ -25,7 +25,7 @@ app [first_arg] [second_arg]
 
 # GLOBAL OPTIONS
 
-**--another-flag, -b**: another usage text
+**--another-flag, -b**: another usage text (default: false)
 
 **--flag, --fl, -f**="": 
 

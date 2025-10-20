@@ -25,7 +25,7 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 # GLOBAL OPTIONS
 
-**--another-flag, -b**: another usage text
+**--another-flag, -b**: another usage text (default: false)
 
 **--flag, --fl, -f**="": 
 
@@ -40,7 +40,7 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 another usage test
 
-**--another-flag, -b**: another usage text
+**--another-flag, -b**: another usage text (default: false)
 
 **--flag, --fl, -f**="": 
 
@@ -48,7 +48,7 @@ another usage test
 
 another usage test
 
-**--sub-command-flag, -s**: some usage text
+**--sub-command-flag, -s**: some usage text (default: false)
 
 **--sub-flag, --sub-fl, -s**="": 
 
@@ -74,7 +74,7 @@ standard usage text
     
     Should be a part of the same code block
 
-**--another-flag, -b**: another usage text
+**--another-flag, -b**: another usage text (default: false)
 
 **--flag, --fl, -f**="": 
 
@@ -84,4 +84,4 @@ standard usage text
 
 >Single line of UsageText
 
-**--sub-command-flag, -s**: some usage text
+**--sub-command-flag, -s**: some usage text (default: false)
