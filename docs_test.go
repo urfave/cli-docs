@@ -8,6 +8,7 @@ import (
 	"net/mail"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
@@ -35,6 +36,32 @@ func normalizeNewlines(d []byte) []byte {
 		),
 		[]byte("\r"), []byte("\n"),
 	)
+}
+
+func buildFlagTest(t *testing.T) *cli.Command {
+	return &cli.Command{
+		Writer: io.Discard,
+		Name:   "main",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "bool-false"},
+			&cli.BoolFlag{Name: "bool-true", Value: true},
+			&cli.StringFlag{Name: "string-empty"},
+			&cli.StringFlag{Name: "string-set", Value: "a string"},
+			&cli.StringMapFlag{Name: "string-map-empty"},
+			&cli.StringMapFlag{Name: "string-map-set", Value: map[string]string{"a": "b"}},
+			&cli.StringSliceFlag{Name: "string-slice-empty"},
+			&cli.StringSliceFlag{Name: "string-slice-set", Value: []string{"a", "b"}},
+			&cli.IntFlag{Name: "string-empty"},
+			&cli.IntFlag{Name: "string-set", Value: 42},
+			&cli.UintFlag{Name: "string-empty"},
+			&cli.UintFlag{Name: "string-set", Value: 21},
+			&cli.FloatFlag{Name: "string-empty"},
+			&cli.FloatFlag{Name: "string-set", Value: 88.32},
+			&cli.DurationFlag{Name: "string-empty"},
+			&cli.DurationFlag{Name: "string-set", Value: 12 * time.Minute},
+			&cli.TimestampFlag{Name: "string-empty"},
+			&cli.TimestampFlag{Name: "string-set", Value: time.Unix(1729456800, 0).UTC()},
+		}}
 }
 
 func buildExtendedTestCommand(t *testing.T) *cli.Command {
@@ -341,6 +368,15 @@ func TestToMarkdown(t *testing.T) {
 
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-doc-no-usagetext.md", res)
+	})
+
+	t.Run("test all flag types", func(t *testing.T) {
+		app := buildFlagTest(t)
+
+		res, err := ToMarkdown(app)
+
+		require.NoError(t, err)
+		expectFileContent(t, "testdata/expected-doc-all-flag-types.md", res)
 	})
 }
 
