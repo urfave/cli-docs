@@ -578,21 +578,19 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 		return "", ""
 	}
 
-	var defaultText string
-	if v, ok := f.(interface{ GetDefaultText() string }); ok {
-		defaultText = v.GetDefaultText()
+	if _, ok := f.(interface{ GetDefaultText() string }); ok {
+		// GetDefaultText also returns GetValue so we have to use reflection
+		if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
+			if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
+				if defaultText := val.Interface().(string); defaultText != "" {
+					return "", defaultText
+				}
+			}
+		}
 	}
 
 	if v, ok := f.(interface{ GetValue() string }); ok {
-		value = v.GetValue()
-
-		// GetDefaultText also returns GetValue if default text not set
-		// but quotes it
-		if strings.Trim(defaultText, "\"") == value {
-			return value, ""
-		} else if defaultText != "" {
-			return "", defaultText
-		}
+		return v.GetValue(), ""
 	}
 
 	var ref = reflect.ValueOf(f)
