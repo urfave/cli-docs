@@ -420,8 +420,8 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			Type:       flag.TypeName(),
 		}
 
-		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool {
-			f.Default = strconv.FormatBool(boolFlag.Value)
+		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool && defaultText == "" {
+			f.Default = fmt.Sprintf("`%s`", strconv.FormatBool(boolFlag.Value))
 		}
 
 		for i, name := range appFlag.Names() {
