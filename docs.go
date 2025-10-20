@@ -411,6 +411,9 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 		} else if value != "" {
 			defaultValue = fmt.Sprintf("`%s`", value)
 		}
+		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool && defaultText == "" {
+			defaultValue = fmt.Sprintf("`%s`", strconv.FormatBool(boolFlag.Value))
+		}
 
 		f := cliTabularFlagTemplate{
 			Usage:      tt.PrepareMultilineString(flag.GetUsage()),
@@ -418,10 +421,6 @@ func (tt tabularTemplate) PrepareFlags(flags []cli.Flag) []cliTabularFlagTemplat
 			TakesValue: flag.TakesValue(),
 			Default:    defaultValue,
 			Type:       flag.TypeName(),
-		}
-
-		if boolFlag, isBool := appFlag.(*cli.BoolFlag); isBool && defaultText == "" {
-			f.Default = fmt.Sprintf("`%s`", strconv.FormatBool(boolFlag.Value))
 		}
 
 		for i, name := range appFlag.Names() {
