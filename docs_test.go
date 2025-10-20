@@ -24,8 +24,8 @@ func expectFileContent(t *testing.T, file, got string) {
 	r := require.New(t)
 	r.NoError(err)
 	r.Equal(
-		string(normalizeNewlines([]byte(got))),
 		string(normalizeNewlines(data)),
+		string(normalizeNewlines([]byte(got))),
 	)
 }
 
