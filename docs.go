@@ -564,11 +564,8 @@ func (tabularTemplate) Prettify(s string) string {
 	return s + "\n" // add an extra newline
 }
 
-// getFlagDefaultValue returns the default value of a flag. Previously, the [cli.DocGenerationFlag] interface included
-// a GetValue string method, but it was removed in https://github.com/urfave/cli/pull/1988.
-// This function serves as a workaround, attempting to retrieve the value using the removed method; if that fails, it
-// tries to obtain it via reflection (the [cli.FlagBase] still has a Value field).
-// It also checks if there is a DefaultText and if set returns it.
+// getFlagDefaultValue returns the default text or default value of a flag.
+// cli.BoolFlag will always return an default.
 func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 	// GetDefaultText also returns GetValue so we have to use reflection
 	if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
