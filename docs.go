@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"regexp"
 	"runtime"
 	"sort"
@@ -567,13 +566,8 @@ func (tabularTemplate) Prettify(s string) string {
 // getFlagDefaultValue returns the default text or default value of a flag.
 // cli.BoolFlag will always return an default.
 func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
-	// GetDefaultText also returns GetValue so we have to use reflection
-	if ref := reflect.ValueOf(f); ref.Kind() == reflect.Ptr && ref.Elem().Kind() == reflect.Struct {
-		if val := ref.Elem().FieldByName("DefaultText"); val.IsValid() && val.Type().Kind() == reflect.String {
-			if defaultText := val.Interface().(string); defaultText != "" {
-				return "", defaultText
-			}
-		}
+	if defaultText := f.GetDefaultText(); defaultText != "" {
+		return "", defaultText
 	}
 
 	if !f.TakesValue() {
@@ -583,5 +577,12 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 		return "", ""
 	}
 
-	return f.GetValue(), ""
+	if value := f.GetValue(); value != "" {
+		if _, ok := f.(*cli.StringFlag); ok {
+			return strings.Trim(value, "\""), ""
+		} else {
+			return value, ""
+		}
+	}
+	return "", ""
 }

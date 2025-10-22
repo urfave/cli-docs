@@ -4,8 +4,8 @@ go 1.24.4
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2
-	github.com/stretchr/testify v1.10.0
-	github.com/urfave/cli/v3 v3.4.1
+	github.com/stretchr/testify v1.11.1
+	github.com/urfave/cli/v3 v3.5.0
 )
 
 require (
