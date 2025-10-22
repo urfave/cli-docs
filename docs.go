@@ -567,10 +567,7 @@ func (tabularTemplate) Prettify(s string) string {
 // cli.BoolFlag will always return an default.
 func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 	if defaultText := f.GetDefaultText(); defaultText != "" {
-		if strings.HasPrefix(defaultText, "\"") && strings.HasSuffix(defaultText, "\"") {
-			defaultText = defaultText[1 : len(defaultText)-1]
-		}
-		return "", defaultText
+		return "", strings.Trim(defaultText, "\"")
 	}
 
 	if !f.TakesValue() {
@@ -581,10 +578,7 @@ func getFlagDefaultValue(f cli.DocGenerationFlag) (value, text string) {
 	}
 
 	if value := f.GetValue(); value != "" {
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			value = value[1 : len(value)-1]
-		}
-		return value, ""
+		return strings.Trim(value, "\""), ""
 	}
 	return "", ""
 }
