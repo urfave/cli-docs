@@ -195,6 +195,9 @@ func prepareCommands(commands []*cli.Command, level int) []string {
 		if command.Hidden {
 			continue
 		}
+		if level > 0 && command.Name == "help" {
+			continue
+		}
 
 		usageText := prepareUsageText(command)
 
@@ -368,6 +371,10 @@ func (tt tabularTemplate) PrepareCommands(commands []*cli.Command, appPath, pare
 	result := make([]cliTabularCommandTemplate, 0, len(commands))
 
 	for _, cmd := range commands {
+		if level > 0 && cmd.Name == "help" {
+			continue
+		}
+
 		command := cliTabularCommandTemplate{
 			AppPath:     appPath,
 			Name:        strings.TrimSpace(strings.Join([]string{parentCommandName, cmd.Name}, " ")),
