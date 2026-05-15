@@ -56,10 +56,44 @@ func tracef(format string, a ...any) {
 	)
 }
 
+// DocsBuilder renders documentation with a caller-provided template string or
+// template file.
+type DocsBuilder struct {
+	docTemplate string
+	err         error
+}
+
+// Template returns a builder that renders documentation with the provided Go
+// template string.
+func Template(docTemplate string) DocsBuilder {
+	return DocsBuilder{docTemplate: docTemplate}
+}
+
+// TemplateFile returns a builder that renders documentation with the provided
+// Go template file.
+func TemplateFile(templatePath string) DocsBuilder {
+	docTemplate, err := readTemplateFile(templatePath)
+	return DocsBuilder{
+		docTemplate: docTemplate,
+		err:         err,
+	}
+}
+
 // ToTabularMarkdown creates a tabular markdown documentation for
 // the `*cli.Command`. The function errors if either parsing or
 // writing of the string fails.
 func ToTabularMarkdown(cmd *cli.Command, appPath string) (string, error) {
+	return Template(MarkdownTabularDocTemplate).ToTabularMarkdown(cmd, appPath)
+}
+
+// ToTabularMarkdown creates a tabular markdown documentation for
+// the `*cli.Command` using the builder template. The function errors if either
+// parsing or writing of the string fails.
+func (b DocsBuilder) ToTabularMarkdown(cmd *cli.Command, appPath string) (string, error) {
+	if b.err != nil {
+		return "", b.err
+	}
+
 	if appPath == "" {
 		appPath = "app"
 	}
@@ -68,7 +102,7 @@ func ToTabularMarkdown(cmd *cli.Command, appPath string) (string, error) {
 
 	t, err := template.New(name).Funcs(template.FuncMap{
 		"join": strings.Join,
-	}).Parse(MarkdownTabularDocTemplate)
+	}).Parse(b.docTemplate)
 	if err != nil {
 		return "", err
 	}
@@ -137,8 +171,19 @@ func ToTabularToFileBetweenTags(cmd *cli.Command, appPath, filePath string, star
 // ToMarkdown creates a markdown string for the `*cli.Command`
 // The function errors if either parsing or writing of the string fails.
 func ToMarkdown(cmd *cli.Command) (string, error) {
+	return Template(MarkdownDocTemplate).ToMarkdown(cmd)
+}
+
+// ToMarkdown creates a markdown string for the `*cli.Command` using the
+// builder template. The function errors if either parsing or writing of the
+// string fails.
+func (b DocsBuilder) ToMarkdown(cmd *cli.Command) (string, error) {
+	if b.err != nil {
+		return "", b.err
+	}
+
 	var w bytes.Buffer
-	if err := writeDocTemplate(cmd, &w, 0); err != nil {
+	if err := writeDocTemplate(cmd, &w, 0, b.docTemplate); err != nil {
 		return "", err
 	}
 	return w.String(), nil
@@ -148,8 +193,19 @@ func ToMarkdown(cmd *cli.Command) (string, error) {
 // `*cli.Command` The function errors if either parsing or writing
 // of the string fails.
 func ToManWithSection(cmd *cli.Command, sectionNumber int) (string, error) {
+	return Template(MarkdownDocTemplate).ToManWithSection(cmd, sectionNumber)
+}
+
+// ToManWithSection creates a man page string with section number for the
+// `*cli.Command` using the builder template. The function errors if either
+// parsing or writing of the string fails.
+func (b DocsBuilder) ToManWithSection(cmd *cli.Command, sectionNumber int) (string, error) {
+	if b.err != nil {
+		return "", b.err
+	}
+
 	var w bytes.Buffer
-	if err := writeDocTemplate(cmd, &w, sectionNumber); err != nil {
+	if err := writeDocTemplate(cmd, &w, sectionNumber, b.docTemplate); err != nil {
 		return "", err
 	}
 	man := md2man.Render(w.Bytes())
@@ -159,8 +215,14 @@ func ToManWithSection(cmd *cli.Command, sectionNumber int) (string, error) {
 // ToMan creates a man page string for the `*cli.Command`
 // The function errors if either parsing or writing of the string fails.
 func ToMan(cmd *cli.Command) (string, error) {
-	man, err := ToManWithSection(cmd, 8)
-	return man, err
+	return ToManWithSection(cmd, 8)
+}
+
+// ToMan creates a man page string for the `*cli.Command` using the builder
+// template. The function errors if either parsing or writing of the string
+// fails.
+func (b DocsBuilder) ToMan(cmd *cli.Command) (string, error) {
+	return b.ToManWithSection(cmd, 8)
 }
 
 type cliCommandTemplate struct {
@@ -171,11 +233,11 @@ type cliCommandTemplate struct {
 	SynopsisArgs []string
 }
 
-func writeDocTemplate(cmd *cli.Command, w io.Writer, sectionNum int) error {
-	tracef("using MarkdownDocTemplate starting %[1]q", string([]byte(MarkdownDocTemplate)[0:8]))
+func writeDocTemplate(cmd *cli.Command, w io.Writer, sectionNum int, docTemplate string) error {
+	tracef("using MarkdownDocTemplate starting %[1]q", previewTemplate(docTemplate))
 
 	const name = "cli"
-	t, err := template.New(name).Parse(MarkdownDocTemplate)
+	t, err := template.New(name).Parse(docTemplate)
 	if err != nil {
 		return err
 	}
@@ -187,6 +249,23 @@ func writeDocTemplate(cmd *cli.Command, w io.Writer, sectionNum int) error {
 		GlobalArgs:   prepareArgsWithValues(cmd.VisibleFlags()),
 		SynopsisArgs: prepareArgsSynopsis(cmd.VisibleFlags()),
 	})
+}
+
+func readTemplateFile(templatePath string) (string, error) {
+	data, err := os.ReadFile(templatePath)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+func previewTemplate(docTemplate string) string {
+	if len(docTemplate) <= 8 {
+		return docTemplate
+	}
+
+	return docTemplate[:8]
 }
 
 func prepareCommands(commands []*cli.Command, level int) []string {

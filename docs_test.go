@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cpuguy83/go-md2man/v2/md2man"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
@@ -190,6 +191,32 @@ func TestToMarkdownFull(t *testing.T) {
 	expectFileContent(t, "testdata/expected-doc-full.md", res)
 }
 
+func TestBuilderToMarkdown(t *testing.T) {
+	cmd := buildExtendedTestCommand(t)
+
+	res, err := Template(`{{ .Command.Name }}|{{ .SectionNum }}|{{ len .Commands }}|{{ len .GlobalArgs }}|{{ len .SynopsisArgs }}`).ToMarkdown(cmd)
+
+	require.NoError(t, err)
+	require.Equal(t, "greet|0|6|4|4", res)
+}
+
+func TestBuilderToMarkdownFromFile(t *testing.T) {
+	cmd := buildExtendedTestCommand(t)
+
+	tmpFile, err := os.CreateTemp("", "*.gotmpl")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Remove(tmpFile.Name()) })
+
+	_, err = tmpFile.WriteString(`{{ .Command.Name }} from {{ .Command.Usage }}`)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	res, err := TemplateFile(tmpFile.Name()).ToMarkdown(cmd)
+
+	require.NoError(t, err)
+	require.Equal(t, "greet from Some app", res)
+}
+
 func TestToTabularMarkdown(t *testing.T) {
 	app := buildExtendedTestCommand(t)
 
@@ -210,6 +237,32 @@ func TestToTabularMarkdown(t *testing.T) {
 		require.NoError(t, err)
 		expectFileContent(t, "testdata/expected-tabular-markdown-custom-app-path.md", res)
 	})
+}
+
+func TestBuilderToTabularMarkdown(t *testing.T) {
+	app := buildExtendedTestCommand(t)
+
+	res, err := Template(`{{ .AppPath }}|{{ .Name }}|{{ join (index .Commands 0).Aliases "," }}`).ToTabularMarkdown(app, "/usr/local/bin")
+
+	require.NoError(t, err)
+	require.Equal(t, "/usr/local/bin|greet|c\n", res)
+}
+
+func TestBuilderToTabularMarkdownFromFile(t *testing.T) {
+	app := buildExtendedTestCommand(t)
+
+	tmpFile, err := os.CreateTemp("", "*.gotmpl")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Remove(tmpFile.Name()) })
+
+	_, err = tmpFile.WriteString(`{{ .AppPath }}|{{ (index .Commands 1).Name }}`)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	res, err := TemplateFile(tmpFile.Name()).ToTabularMarkdown(app, "/usr/local/bin")
+
+	require.NoError(t, err)
+	require.Equal(t, "/usr/local/bin|info\n", res)
 }
 
 func TestToTabularMarkdownFailed(t *testing.T) {
@@ -389,6 +442,19 @@ func TestToMan(t *testing.T) {
 	expectFileContent(t, "testdata/expected-doc-full.man", res)
 }
 
+func TestBuilderToMan(t *testing.T) {
+	app := buildExtendedTestCommand(t)
+	tpl := `# NAME
+
+{{ .Command.Name }}
+`
+
+	res, err := Template(tpl).ToMan(app)
+
+	require.NoError(t, err)
+	require.Equal(t, string(md2man.Render([]byte("# NAME\n\ngreet\n"))), res)
+}
+
 func TestToManParseError(t *testing.T) {
 	app := buildExtendedTestCommand(t)
 
@@ -399,6 +465,34 @@ func TestToManParseError(t *testing.T) {
 	_, err := ToMan(app)
 
 	require.ErrorContains(t, err, "template: cli:1: unclosed action")
+}
+
+func TestTemplateFileMissing(t *testing.T) {
+	app := buildExtendedTestCommand(t)
+
+	_, err := TemplateFile("/missing/template.gotmpl").ToMarkdown(app)
+
+	require.ErrorIs(t, err, fs.ErrNotExist)
+}
+
+func TestBuilderToManWithSectionFromFile(t *testing.T) {
+	app := buildExtendedTestCommand(t)
+
+	tmpFile, err := os.CreateTemp("", "*.gotmpl")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = os.Remove(tmpFile.Name()) })
+
+	_, err = tmpFile.WriteString(`# NAME
+
+{{ .Command.Name }} ({{ .SectionNum }})
+`)
+	require.NoError(t, err)
+	require.NoError(t, tmpFile.Close())
+
+	res, err := TemplateFile(tmpFile.Name()).ToManWithSection(app, 5)
+
+	require.NoError(t, err)
+	require.Equal(t, string(md2man.Render([]byte("# NAME\n\ngreet (5)\n"))), res)
 }
 
 func TestToManWithSection(t *testing.T) {

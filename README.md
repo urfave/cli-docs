@@ -83,6 +83,36 @@ greet [GLOBAL OPTIONS] [command [COMMAND OPTIONS]] [ARGUMENTS...]
 
 ````
 
+## Available doc types
+
+- `docs.ToMarkdown(cmd)`
+- `docs.ToTabularMarkdown(cmd, appPath)`
+- `docs.ToMan(cmd)`
+- `docs.ToManWithSection(cmd, section)`
+
+## Custom templates
+
+The package ships with embedded templates in `MarkdownDocTemplate` and
+`MarkdownTabularDocTemplate`, and it also lets you render with your own
+template string or `.gotmpl` file via a call.
+
+```go
+customMarkdown, err := docs.TemplateFile("docs/custom.md.gotmpl").ToMarkdown(app)
+if err != nil {
+    panic(err)
+}
+
+customTabular, err := docs.Template(
+    `# {{ .Name }}
+
+{{ range .Commands }}- {{ .Name }}
+{{ end }}`,
+).ToTabularMarkdown(app, "greet")
+if err != nil {
+    panic(err)
+}
+```
+
 ## Examples
 Some examples of the cli generated using this markdown
 * https://woodpecker-ci.org/docs/cli
