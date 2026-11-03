@@ -4,7 +4,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/urfave/cli-docs/v3.svg)](https://pkg.go.dev/github.com/urfave/cli-docs/v3)
 [![Go Report Card](https://goreportcard.com/badge/github.com/urfave/cli-docs/v3)](https://goreportcard.com/report/github.com/urfave/cli-docs/v3)
 
-urfave/cli-docs/v3 is an extended documentation library for use with urfave/cli/v3.
+`urfave/cli-docs/v3` is a CLI documentation generator library for `urfave/cli/v3`.
 
 ## Start using
 
